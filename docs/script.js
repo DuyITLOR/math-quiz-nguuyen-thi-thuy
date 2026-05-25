@@ -336,8 +336,12 @@ const chapters = [
   }
 ];
 
+const grades = ["Toán 8", "Toán 9"];
+const gradeTabs = document.getElementById("gradeTabs");
 const chapterList = document.getElementById("chapterList");
 const quizForm = document.getElementById("quizForm");
+const gradeBadge = document.getElementById("gradeBadge");
+const courseCount = document.getElementById("courseCount");
 const chapterMeta = document.getElementById("chapterMeta");
 const chapterTitle = document.getElementById("chapterTitle");
 const totalCount = document.getElementById("totalCount");
@@ -348,17 +352,37 @@ const submitButton = document.getElementById("submitButton");
 const resetButton = document.getElementById("resetButton");
 const resultText = document.getElementById("resultText");
 
+let activeGrade = grades[0];
 let activeChapterId = chapters[0].id;
 
+function getGradeChapters() {
+  return chapters.filter((chapter) => chapter.grade === activeGrade);
+}
+
 function getActiveChapter() {
-  return chapters.find((chapter) => chapter.id === activeChapterId) || chapters[0];
+  const gradeChapters = getGradeChapters();
+  return gradeChapters.find((chapter) => chapter.id === activeChapterId) || gradeChapters[0];
+}
+
+function renderGradeButtons() {
+  gradeTabs.innerHTML = grades.map((grade) => {
+    const count = chapters.filter((chapter) => chapter.grade === grade).length;
+    return `
+      <button class="grade-button${grade === activeGrade ? " active" : ""}" type="button" data-grade="${grade}">
+        ${grade.replace("Toán ", "Lớp ")} · ${count}
+      </button>
+    `;
+  }).join("");
 }
 
 function renderChapterButtons() {
-  chapterList.innerHTML = chapters.map((chapter) => `
+  const gradeChapters = getGradeChapters();
+  courseCount.textContent = `${gradeChapters.length} chương`;
+  gradeBadge.textContent = activeGrade;
+  chapterList.innerHTML = gradeChapters.map((chapter) => `
     <button class="chapter-button${chapter.id === activeChapterId ? " active" : ""}" type="button" data-chapter="${chapter.id}">
       <span>${chapter.title}</span>
-      <small>${chapter.grade} · ${chapter.questions.length} câu</small>
+      <small>${chapter.questions.length} câu</small>
     </button>
   `).join("");
 }
@@ -438,8 +462,19 @@ chapterList.addEventListener("click", (event) => {
   renderQuiz();
 });
 
+gradeTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-grade]");
+  if (!button) return;
+  activeGrade = button.dataset.grade;
+  activeChapterId = getGradeChapters()[0].id;
+  renderGradeButtons();
+  renderChapterButtons();
+  renderQuiz();
+});
+
 submitButton.addEventListener("click", gradeQuiz);
 resetButton.addEventListener("click", resetQuiz);
 
+renderGradeButtons();
 renderChapterButtons();
 renderQuiz();
